@@ -15,3 +15,7 @@ std::string hash_value = pHasher->ComputeHash(message);
 
 std::cout << "Message: " << message << std::endl;
 std::cout << "Hash value: " << hash_value << std::endl;
+```
+
+## Help
+If you need any help regarding the code don't hesitate to contact me on Discord: uc1337#9304
