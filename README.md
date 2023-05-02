@@ -3,7 +3,7 @@ A some-what of a reliable SHA256 replica I decided to write (as a utility) in-pr
 Should be reliable for computing message digests.
 
 ## Usage
-To use **HASHish** function, create an instance of the `CHash` class and call the `ComputeHash` function:
+To use **HASHish**, create an instance of the `CHash` class and call the `ComputeHash` function:
 
 ```cpp
 #include "CHash.hxx"
