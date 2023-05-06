@@ -3,7 +3,7 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
+#include <format>
 #include <vector>
 
 class CHash {
@@ -57,7 +57,7 @@ private:
 		const std::vector<std::uint8_t>& message);
 	static std::vector<std::uint8_t> PadMessage(
 		const std::vector<std::uint8_t>& message);
-	static std::vector<std::uint32_t> ComputeInitialHashValues();
+	static constexpr std::vector<std::uint32_t> ComputeInitialHashValues();
 };
 
 void CHash::PrepareMessageSchedule(
@@ -137,13 +137,27 @@ std::string CHash::ComputeHash(const std::string& message) {
 	return VectorToString(hash_bytes);
 }
 
+// Helper function so ComputeHashBlocks can use a ranged-based for loop
+std::vector<std::vector<std::uint8_t>> ChunkIntoBlocks(
+	const std::vector<std::uint8_t>& message, std::size_t block_size) {
+	std::vector<std::vector<std::uint8_t>> blocks;
+
+	// Chunk the message into blocks w/ sizeof(block_size).
+	for (auto it = message.begin(); it < message.end(); it += block_size) {
+		auto block_end = std::min(it + block_size, message.end());
+		blocks.emplace_back(it, block_end);
+	}
+
+	return blocks;
+}
+
 std::vector<std::uint32_t> CHash::ComputeHashBlocks(
 	const std::vector<std::uint8_t>& message) {
 	std::vector<std::uint32_t> hash_values = ComputeInitialHashValues();
 
-	for (std::size_t i = 0; i < message.size(); i += kBlockSize) {
+	for (const auto& message_block : ChunkIntoBlocks(message, kBlockSize)) {
 		std::vector<std::uint32_t> message_schedule;
-		PrepareMessageSchedule(&message[i], message_schedule);
+		PrepareMessageSchedule(message_block.data(), message_schedule);
 		ApplyCompressionFunction(hash_values.data(), message_schedule);
 	}
 
@@ -175,7 +189,7 @@ std::vector<std::uint8_t> CHash::PadMessage(
 	return padded_message;
 }
 
-std::vector<std::uint32_t> CHash::ComputeInitialHashValues() {
+constexpr std::vector<std::uint32_t> CHash::ComputeInitialHashValues() {
 	return { 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
 			0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 };
 }
@@ -195,12 +209,12 @@ std::vector<std::uint8_t> CHash::HashToVector(
 }
 
 std::string CHash::VectorToString(const std::vector<std::uint8_t>& input) {
-	std::stringstream ss;
-	ss << std::hex << std::setfill('0');
+	std::string result;
+	result.reserve(input.size() * 2);
 	for (const auto& byte : input) {
-		ss << std::setw(2) << static_cast<int>(byte);
+		result += std::format("{:02x}", byte);
 	}
-	return ss.str();
+	return result;
 }
 
 std::vector<std::uint8_t> CHash::StringToVector(const std::string& input) {
